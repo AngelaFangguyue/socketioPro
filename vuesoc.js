@@ -92,6 +92,15 @@ io.on("connection", function(socket) {
   socket.on("hwEmit", function(obj) {
     console.log("来自hw组件的hwEmit，服务端接收到:", obj);
   });
+
+  socket.on("disconnect", (reason) => {
+    //if (reason === "io server disconnect") {
+    // the disconnection was initiated by the server, you need to reconnect manually
+    //socket.connect();
+    console.log("disconnect3333:", reason);
+    //}
+    // else the socket will automatically try to reconnect
+  });
 });
 
 http.listen(3000, function() {

@@ -25,7 +25,7 @@
             <br />
             <br />
             <button @click="clickButton">在Etab组件中：socket建立连接</button>
-            
+
             <br />
             <br />
             <button @click="clickButton1">在Etab组件中：socket断开连接</button>
@@ -58,7 +58,7 @@ export default {
       //socket: [],
       socket: {},
       sockets: [],
-      maps:[]
+      maps: [],
     };
   },
   methods: {
@@ -123,15 +123,14 @@ export default {
       socket1.on("connect", (obj) => {
         // ...
         console.log("建立连接成功了：", obj, socket1.id);
-        let name = this.editableTabsValue;
         let obj1 = {};
-        obj1[name] = socket1
+        obj1[this.editableTabsValue] = socket1;
         this.sockets.push(obj1);
         console.log(
           `现在已经有${this.sockets.length}个客户端与服务端建立连接了,依次打出他们的socket.id：`
         );
         this.sockets.forEach((item) => {
-          console.log(item.id); //此时新建立的还是空呢
+          console.log(item);
         });
       });
 
@@ -194,16 +193,43 @@ export default {
         //if (reason === "io server disconnect") {
         // the disconnection was initiated by the server, you need to reconnect manually
         //socket.connect();
-        console.log("disconnect:", reason);
+        console.log("disconnect1111:", reason);
         //}
         // else the socket will automatically try to reconnect
       });
     },
     clickButton1(event) {
-      console.log("event:",event);
+      console.log("event:", event);
       //this.sockets
-      console.log("this.sockets:",this.sockets);
+      console.log("this.sockets:", this.sockets);
       //console.log("this.sockets:",socket1);
+      console.log(
+        this.sockets.find((item) => item[this.editableTabsValue] !== undefined)[
+          this.editableTabsValue
+        ]
+      );
+      //客户端还需要发消息：让服务器断开与该客户端的连接
+      // this.sockets
+      //   .find((item) => item[this.editableTabsValue] !== undefined)[this.editableTabsValue].emit("");
+      (this.sockets
+        .find((item) => item[this.editableTabsValue] !== undefined)[this.editableTabsValue]).close();
+
+      (this.sockets
+        .find((item) => item[this.editableTabsValue] !== undefined)[this.editableTabsValue]).on("disconnect", (reason) => {
+          //if (reason === "io server disconnect") {
+          // the disconnection was initiated by the server, you need to reconnect manually
+          //socket.connect();
+          console.log("disconnect2222:", reason);
+          //}
+          // else the socket will automatically try to reconnect
+        });
+      //同时将数组中这个对象删掉
+      this.sockets.splice(
+        this.sockets.findIndex(
+          (item) => item[this.editableTabsValue] !== undefined
+        ),
+        1
+      );
     },
     // handleclick(tab, event) {
     //console.log(tab, event);
