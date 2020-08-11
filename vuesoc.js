@@ -9,8 +9,15 @@ app.get("/", function(req, res) {
 });
 
 let sockets = [];
+let i = 0;
 
 io.on("connection", function(socket) {
+  // socket.on("clearAll", (obj) => {
+  //   i += 1;
+  //   console.log("clearAll:", obj, i);
+  //   sockets.splice();
+  // });
+  //console.log("socket.rooms", socket);
   sockets.push(socket);
 
   console.log(
@@ -33,9 +40,19 @@ io.on("connection", function(socket) {
     socket.join(obj.roomNum, () => {
       let rooms = Object.keys(socket.rooms);
       console.log("加入特定房间：", rooms); // [ <socket.id>, 'room 237' ]
+      //在这个地方删除之前建立的连接
+      sockets.splice(
+        sockets.findIndex((item) => item.rooms[2] === rooms[2]),
+        1
+      );
+      console.log("sockets.length:", sockets.length);
+      sockets.forEach((item) => console.log("enterRoom:", item.id));
+
       io.to(obj.roomNum).emit(obj.roomNum, {
         message: `only one room + ${obj.roomNum}`,
       });
+
+      
     });
   });
 
@@ -127,16 +144,11 @@ io.on("connection", function(socket) {
     sockets.forEach((item) => {
       console.log(item.id, item.connected);
     });
-    sockets = sockets.filter(
-      (item) => item.connected === true
-    );
+    sockets = sockets.filter((item) => item.connected === true);
     console.log("disconnect2:", sockets);
     sockets.forEach((item) => {
       console.log(item.id, item.connected);
     });
-    // socket.on("closeee",(obj)=>{
-    //   console.log("closeee:",obj.msg);
-    // })
     console.log("disconnect3333:", reason);
 
     //}
