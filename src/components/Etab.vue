@@ -59,12 +59,12 @@ export default {
       //socket: [],
       socket: {},
       sockets: [],
-      maps: [],
+      socketIds: [],
     };
   },
   methods: {
     addTab(targetName) {
-      //sessionStorage.getItem()//找到最大的index，依次加
+      //sessionStorage.getItem()//找到最大的index，依次加,created
       let newTabName = ++this.tabIndex + "";
       let newTabName1 = "客户端" + newTabName;
       console.log("targetName:", targetName, typeof newTabName);
@@ -114,6 +114,9 @@ export default {
       // });//这个事件不起作用
     },
     clickButton: function() {
+      if (flg) {
+      } else {
+      }
       //console.log(this.editableTabs[this.editableTabs.findIndex((item)=>item.name===this.editableTabsValue)]);
       //editableTabs.name =
       //哪个标签页
@@ -125,9 +128,9 @@ export default {
       let roomNum = "room" + clickTab.name;
       //socket1.push({clickTab:io("http://localhost:3000")});
       let socket1 = io("http://localhost:3000"); //todo，服务器地址
-      this.sockets.forEach((item) => {
-        console.log("129:", item);
-      });
+      // this.sockets.forEach((item) => {
+      //   console.log("129:", item);
+      // });
       // console.log("clickTab.name--socket1:", clickTab.name, socket1.id);
 
       //事件connect
@@ -139,11 +142,25 @@ export default {
         let obj1 = {};
         obj1[this.editableTabsValue] = socket1;
         this.sockets.push(obj1);
+        this.socketIds.push(clickTab.name);
         console.log(
           `现在已经有${this.sockets.length}个客户端与服务端建立连接了,依次打出他们的socket.id：`
         );
+        // this.sockets = this.sockets.foreach(
+        //   (item) =>
+        //     //console.log(item);
+        //     //console.log(Object.keys(item));
+        //     //console.log(item[Object.keys(item)[0]].connected,typeof(item[Object.keys(item)[0]].connected));
+        //     console.log(item[Object.keys(item)[0]])
+
+        //   // if(item[Object.keys(item)[0]].connected){
+        //   //   item.flgg = true
+        //   // }
+        // );
+        sessionStorage.setItem("socketIds", JSON.stringify(this.socketIds));
         this.sockets.forEach((item) => {
           console.log(item);
+          console.log(item[Object.keys(item)[0]]);
         });
 
         //发送房间号码,要在connect事件的外部注册，这样在重新连接的时候才不会再次被注册
@@ -244,6 +261,7 @@ export default {
         // else the socket will automatically try to reconnect
       });
     },
+
     clickButton1() {
       //console.log("event:", event);
       //this.sockets
@@ -257,10 +275,16 @@ export default {
       //客户端还需要发消息：让服务器断开与该客户端的连接
       // this.sockets
       //   .find((item) => item[this.editableTabsValue] !== undefined)[this.editableTabsValue].emit("");
+
       const activeTab = this.editableTabsValue;
       let tabClose = this.sockets.find((item) => item[activeTab] !== undefined);
       //console.log("tabClose11:", tabClose[activeTab]);
       //tabClose[activeTab].emit("ddis", { msg:tabClose[activeTab] });
+      this.socketIds.splice(
+        this.socketIds.findIndex((item) => item === activeTab),
+        1
+      );
+      sessionStorage.setItem("socketIds", JSON.stringify(this.socketIds));
       tabClose[activeTab].close();
       //console.log("tabClose22:",tabClose,tabClose[activeTab])
       // tabClose[activeTab].on("disconnect", (reason) => {
@@ -288,6 +312,8 @@ export default {
   },
 
   created() {
+    console.log("created");
+    const socketIds = JSON.parse(sessionStorage.getItem("socketIds"));
     const sessions = JSON.parse(sessionStorage.getItem("editableTabs"));
     const editableTabsValue = sessionStorage.getItem("editableTabsValue");
     if (sessions) {
@@ -302,6 +328,7 @@ export default {
       this.editableTabs = sessions;
       this.editableTabsValue = editableTabsValue;
       this.tabIndex = maxindex;
+      this.socketIds = socketIds;
     }
   },
   //或者将其放在created函数中

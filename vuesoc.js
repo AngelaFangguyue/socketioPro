@@ -134,6 +134,9 @@ io.on("connection", function(socket) {
     sockets.forEach((item) => {
       console.log(item.id, item.connected);
     });
+    // socket.on("closeee",(obj)=>{
+    //   console.log("closeee:",obj.msg);
+    // })
     console.log("disconnect3333:", reason);
 
     //}
@@ -149,3 +152,13 @@ http.listen(3000, function() {
 // 链接：https://juejin.im/post/6844903935656853512
 // 来源：掘金
 // 著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+//一个socket对应一个room
+//1》可以建立一个socket连接，每新增一个tab的时候emit一个事件
+//   当关闭掉一个tab的时候，
+//2》也可以一个tab建立一个连接，
+//   但是这样当关闭掉其中一个tab的时候，关闭掉对应的连接
+//   由于没有办法传递给后端服务器，因此在后端需要循环，
+//   当connected为false的时候，去掉这个socket连接
+//   2.1在关闭连接的时候，在关闭事件里：前端在close之前emit一个事件不行
+//   2.2在新建连接的时候，事先前端emit一个closeee事件，尝试在后端disconnect的时候，去on事件closeee，发现不行
+//3》namespace命名空间
