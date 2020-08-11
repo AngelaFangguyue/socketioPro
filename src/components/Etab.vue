@@ -1,6 +1,7 @@
 <template>
   <div style="border: 1px solid blueviolet;">
     <router-link to="/">返回首页</router-link>
+    <router-link to="/hw">返回Hw</router-link>
     <div style="border: 1px solid red;">
       <div style="border: 1px solid green;margin-bottom: 20px;">
         <el-button size="small" @click="addTab(editableTabsValue)">
@@ -213,6 +214,10 @@ export default {
         //   console.log("ferret>name:", name);
         //   fn("woot");
         // });
+
+        socket1.on("interval", () => {
+          console.log("interval>>>ferret>name:");
+        });
       } //elseslese
     },
 
@@ -237,7 +242,8 @@ export default {
 
   created() {
     console.log("created");
-    const socketIds = JSON.parse(sessionStorage.getItem("socketIds"));
+    console.log("this.sockets:",this.sockets);
+   // const socketIds = JSON.parse(sessionStorage.getItem("socketIds"));
     const editableTabs = JSON.parse(sessionStorage.getItem("editableTabs"));
     const editableTabsValue = sessionStorage.getItem("editableTabsValue");
     if (editableTabs) {
@@ -251,12 +257,13 @@ export default {
       this.editableTabsValue = editableTabsValue;
       this.tabIndex = maxindex;
     }
-    if (socketIds) {
-      this.socketIds = socketIds;
-      console.log("sockets:", this.sockets);
-      //
-      this.clickButton(true);
-    }
+    // if (socketIds) {
+    //   this.socketIds = socketIds;
+    //   console.log("sockets:", this.sockets);
+    //   //this.sockets.forEach(item=>item[Object.keys(item)[0]].close());
+    //   //
+    //   //this.clickButton(true);
+    // }
   },
   //或者将其放在created函数中
 
