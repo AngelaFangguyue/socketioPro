@@ -7,79 +7,68 @@ app.get("/", function(req, res) {
   res.send("<h1>你好web秀</h1>");
 });
 
-let sockets = [];
-let roomflg = {};
+let tabs = [];
+let message = [];
+let sendmesg = "";
 
 io.on("connection", function(socket) {
-  
-  sockets.push(socket);
-
   console.log(
-    `我是服务端，现在已经和${sockets.length}个客户端建立连接了,依次打出他们的socket.id：`
+    `我是服务端，现在已经和客户端建立连接了,打出他的socket.id：`,
+    socket.id
   );
-  sockets.forEach((item) => {
-    console.log(item.id);
+
+  socket.on("enterRoom", (obj) => {
+    tabs.push(obj.roomNum);
+    console.log("enterRoom》tabs:", tabs);
+    message = [];
+    for (let i = 0; i < tabs.length; i++) {
+      let message1 = { name: tabs[i] };
+      message.push(message1);
+    }
+    sendmesg = JSON.stringify(message);
+    console.log("enterRoom》sendmesg:", sendmesg);
   });
 
-  socket.join("237room", () => {
-    let rooms = Object.keys(socket.rooms);
-    console.log("首次加入房间：", rooms); // [ <socket.id>, 'room 237' ]
-    io.to("237room").emit("a new user has joined the room", {
-      message: "a new user has joined the room 237",
-    }); //' broadcast to everyone in the room
-
-    setInterval(()=>{socket.emit("interval")},3000);
-
-  });
-
-  socket.on("enterRoom", function(obj) {
-
-    console.log("接收到客户端的enterRoom:", obj.roomNum, socket.id);
-
-    socket.join(obj.roomNum, () => {
-      let rooms = Object.keys(socket.rooms);
-      console.log("rooms[2]:",rooms[2]);
-      console.log("加入特定房间：", rooms); // [ <socket.id>, 'room 237' ]
-      //在这个地方删除之前建立的连接
-      if (roomflg[rooms[2]] === 1) {
-        console.log("sockets.length:", sockets.length);
-        sockets.forEach((item) => console.log("enterRoom:", item.id,item.rooms));
-        console.log(sockets.findIndex((item) => item.rooms[2] === rooms[2]));
-        // sockets.splice(
-        //   sockets.findIndex((item) => item.rooms[2] === rooms[2]),
-        //   1
-        // );
-        // console.log("sockets.length:", sockets.length);
-        sockets.forEach((item) => console.log("enterRoom:", item.id));
-      } else {
-        roomflg[rooms[2]] = 1;
+  socket.on("leaveRoom", (obj) => {
+    console.log("关闭掉了其中的一个tab:", obj.roomNum);
+    tabs.splice(
+      tabs.findIndex((item) => item === obj.roomNum),
+      1
+    );
+    console.log("leaveRoom》tabs:", tabs);
+    message = [];
+    if (tabs.length === 0) {
+      socket.disconnect();//当关闭最后一个tab的时候，关掉
+    } else {
+      for (let i = 0; i < tabs.length; i++) {
+        let message1 = { name: tabs[i] };
+        message.push(message1);
       }
-
-      //
-      io.to(obj.roomNum).emit(obj.roomNum, {
-        message: `only one room + ${obj.roomNum}`,
-      });
-    });
+      sendmesg = JSON.stringify(message);
+      console.log("leaveRoom》sendmesg:", sendmesg);
+    }
   });
+
+  setInterval(() => {
+    socket.emit("clientmessage", { sendmesg: sendmesg });
+  }, 4000);
 
   socket.on("disconnect", (reason) => {
-    //if (reason === "io server disconnect") {
-    // the disconnection was initiated by the server, you need to reconnect manually
-    //socket.connect();
-    console.log("disconnect1:");
-    sockets.forEach((item) => {
-      console.log(item.id, item.connected);
-    });
-    sockets = sockets.filter((item) => item.connected === true);
-    console.log("disconnect2:", sockets.length, sockets);
-    sockets.forEach((item) => {
-      console.log(item.id, item.connected);
-    });
     console.log("disconnect3333:", reason);
-
-    //}
-    // else the socket will automatically try to reconnect
+    console.log("disconnect3333:", tabs);
+    tabs = [];
+    message = [];
+    sendmesg = "";
   });
+
+  // socket.on("disc", (reason) => {
+  //   console.log("disconnect4444:", reason);
+  //   console.log("disconnect4444:", tabs);
+  //   tabs = [];
+  //   message = [];
+  //   sendmesg = "";
+  //   socket.disconnect();
+  // });
 });
 
 http.listen(3000, function() {

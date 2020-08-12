@@ -3,7 +3,7 @@
     <router-link to="/">返回首页</router-link>
     <router-link to="/hw">返回Hw</router-link>
     <div style="border: 1px solid red;">
-      <div style="border: 1px solid green;margin-bottom: 20px;">
+      <div style="border: 1px solid green; margin-bottom: 20px;">
         <el-button size="small" @click="addTab(editableTabsValue)">
           add tab
         </el-button>
@@ -15,7 +15,6 @@
         @tab-remove="removeTab"
         @tab-click="handleclick"
       >
-        <!-- @tab-click="handleclick" -->
         <el-tab-pane
           v-for="(item, index) in editableTabs"
           :key="item.name"
@@ -41,8 +40,14 @@
 </template>
 <script>
 import io from "socket.io-client";
+import { store, mutations } from "../store";
 export default {
   name: "Etab",
+  computed: {
+    socketstore() {
+      return store.socket;
+    },
+  },
   data() {
     return {
       editableTabsValue: "2",
@@ -59,10 +64,10 @@ export default {
         },
       ],
       tabIndex: 2,
-      //socket: [],
       socket: {},
       sockets: [],
-      socketIds: [],
+      socket1: {},
+      flg: "",
     };
   },
   methods: {
@@ -105,133 +110,91 @@ export default {
       //todo其实关闭之后，取消连接的操作在在这里写
     },
 
-    clickButton: function(flg) {
-      if (flg) {
-        this.sockets = [];
-        for (let i = 0; i < this.socketIds.length; i++) {
-          let roomNum = "room" + this.socketIds[i];
-          let socket1 = io("http://localhost:3000");
-          socket1.on("connect", (obj) => {
-            console.log("created:建立连接成功了：", obj, socket1.id);
-            let obj1 = {};
-            obj1[this.socketIds[i]] = socket1;
-            this.sockets.push(obj1);
-            console.log(
-              `created:现在已经有${this.sockets.length}个客户端与服务端建立连接了,依次打出他们的socket.id：`
-            );
+    clickButton: function() {
+      let clickTab = this.editableTabs[
+        this.editableTabs.findIndex(
+          (item) => item.name === this.editableTabsValue
+        )
+      ];
+      let roomNum = "room" + clickTab.name;
+      console.log("clickButton,roomNUm:", roomNum);
+      mutations.setName("gdd");
 
-            this.sockets.forEach((item) => {
-              console.log(item);
-              console.log(item[Object.keys(item)[0]]);
-            });
-            // if (flg && i === 0) {
-            //   socket1.emit("clearAll");
-            // }
-            socket1.emit("enterRoom", {
-              roomNum: roomNum,
-            });
-          });
-          // socket1.on(roomNum, (obj) => {
-          //   console.log("created:接收特定房间的消息：", obj);
-          // });
+      //this.socketIds.push(clickTab.name);
+      //sessionStorage.setItem("socketIds", JSON.stringify(this.socketIds));
+      //////////////////////////////////////////////////
 
-          // socket1.on("a new user has joined the room", (obj) => {
-          //   console.log(
-          //     roomNum,
-          //     "created:接收到来自服务端的a new user has joined the room消息：",
-          //     obj
-          //   );
-          // });
+      //if (Object.keys(this.socketstore).indexOf("acks") > -1) {
+      if (Object.keys(this.socket1).indexOf("acks") > -1) {
+        console.log(
+          "空this.flg,this.socket1,this.socketstore:",
+          this.flg,
+          this.socket1,
+          this.socketstore
+        );
 
-          socket1.on("disconnect", (reason) => {
-            this.sockets = this.sockets.filter(
-              (item) => item[Object.keys(item)[0]].connected === true
-            );
-            console.log("created:this.sockets:", this.sockets.length);
-            this.sockets.forEach((item) =>
-              console.log("created:22item:", item)
-            );
-            console.log("disconnect1111:", reason);
-          });
-        }
+        //this.socket1 = this.socketstore;
       } else {
-        let clickTab = this.editableTabs[
-          this.editableTabs.findIndex(
-            (item) => item.name === this.editableTabsValue
-          )
-        ];
-        let roomNum = "room" + clickTab.name;
-
-        let socket1 = io("http://localhost:3000"); //todo，服务器地址
+        console.log("真this.flg:", this.flg, this.socketstore);
+        this.flg = true;
+        this.socket1 = io("http://localhost:3000");
 
         //事件connect
-        socket1.on("connect", (obj) => {
-          console.log("建立连接成功了：", obj, socket1.id);
-          let obj1 = {};
-          obj1[this.editableTabsValue] = socket1;
-          this.sockets.push(obj1);
-          this.socketIds.push(clickTab.name);
-          console.log(
-            `现在已经有${this.sockets.length}个客户端与服务端建立连接了,依次打出他们的socket.id：`
-          );
-
-          this.sockets.forEach((item) => {
-            console.log(item);
-            console.log(item[Object.keys(item)[0]]);
-          });
-
-          sessionStorage.setItem("socketIds", JSON.stringify(this.socketIds));
-          //发送房间号码,要在connect事件的外部注册，这样在重新连接的时候才不会再次被注册
-          socket1.emit("enterRoom", {
-            roomNum: roomNum,
-          });
+        this.socket1.on("connect", (obj) => {
+          console.log("建立连接成功了：", obj, this.socket1.id);
         });
 
-        socket1.on(roomNum, (obj) => {
-          console.log("接收特定房间的消息：", obj);
+        this.socket1.on("reconnect", () => {
+          console.log("reconnect");
+          // this.socket1.emit("enterRoom", {
+          //   roomNum: roomNum,
+          // });
         });
 
-        socket1.on("a new user has joined the room", (obj) => {
-          console.log(
-            clickTab.name,
-            "，接收到来自服务端的a new user has joined the room消息：",
-            obj
-          );
-        });
-
-        socket1.on("disconnect", (reason) => {
-          this.sockets = this.sockets.filter(
-            (item) => item[Object.keys(item)[0]].connected === true
-          );
-          console.log("this.sockets:", this.sockets.length);
-          this.sockets.forEach((item) => console.log("22item:", item));
+        this.socket1.on("disconnect", (reason) => {
+          sessionStorage.setItem("newConnect", "true");
           console.log("disconnect1111:", reason);
           //}
           // else the socket will automatically try to reconnect
         });
 
-        // socket1.on("ferret", (name, fn) => {
-        //   console.log("ferret>name:", name);
-        //   fn("woot");
-        // });
+        this.socket1.on("clientmessage", (obj) => {
+          mutations.setMessage(obj.sendmesg);
+        }); //这个必须放在外面
 
-        socket1.on("interval", () => {
-          console.log("interval>>>ferret>name:");
-        });
-      } //elseslese
+        mutations.setSocket(this.socket1);
+      }
+
+      this.socket1.emit("enterRoom", {
+        roomNum: roomNum,
+      });
+
+      let connectTabs = JSON.parse(sessionStorage.getItem("connectTabs"));
+      if (!connectTabs) {
+        connectTabs = [];
+      }
+      connectTabs.push(roomNum);
+      sessionStorage.setItem("connectTabs", JSON.stringify(connectTabs));
     },
 
     cancelConnect() {
-      const activeTab = this.editableTabsValue;
-      let tabClose = this.sockets.find((item) => item[activeTab] !== undefined);
+      //const activeTab = this.editableTabsValue;
+      let clickTab = this.editableTabs[
+        this.editableTabs.findIndex(
+          (item) => item.name === this.editableTabsValue
+        )
+      ];
+      let roomNum = "room" + clickTab.name;
 
-      this.socketIds.splice(
-        this.socketIds.findIndex((item) => item === activeTab),
-        1
-      );
+      console.log("准备触发leaveRoom事件");
+      this.socket1.emit("leaveRoom", { roomNum: roomNum });
 
-      sessionStorage.setItem("socketIds", JSON.stringify(this.socketIds));
-      tabClose[activeTab].close(); //这个地方不能emit事件，所以只有在服务端循环找到是哪个tab关闭了连接
+      let connectTabs = JSON.parse(sessionStorage.getItem("connectTabs"));
+      if (!connectTabs) {
+        connectTabs = [];
+      }
+      connectTabs.splice(connectTabs.findIndex((item) => item === roomNum));
+      sessionStorage.setItem("connectTabs", JSON.stringify(connectTabs));
     },
 
     handleclick(tab, event) {
@@ -241,11 +204,18 @@ export default {
   },
 
   created() {
-    console.log("created");
-    console.log("this.sockets:",this.sockets);
-   // const socketIds = JSON.parse(sessionStorage.getItem("socketIds"));
+    console.log("created>Etab");
+    console.log(
+      "mutations,store.name,store.message，store.socket,this.socketstore:",
+      mutations,
+      store.name,
+      store.message,
+      store.socket,
+      this.socketstore
+    );
+    //console.log("this.sockets:", this.sockets);
+
     const editableTabs = JSON.parse(sessionStorage.getItem("editableTabs"));
-    const editableTabsValue = sessionStorage.getItem("editableTabsValue");
     if (editableTabs) {
       let maxindex = parseInt(editableTabs[0].name);
       for (let i = 1; i < editableTabs.length; i++) {
@@ -254,17 +224,45 @@ export default {
         }
       }
       this.editableTabs = editableTabs;
-      this.editableTabsValue = editableTabsValue;
+      this.editableTabsValue = sessionStorage.getItem("editableTabsValue");
       this.tabIndex = maxindex;
     }
-    // if (socketIds) {
-    //   this.socketIds = socketIds;
-    //   console.log("sockets:", this.sockets);
-    //   //this.sockets.forEach(item=>item[Object.keys(item)[0]].close());
-    //   //
-    //   //this.clickButton(true);
-    // }
+
+    //先看全局数据里有没有连接，有的话，把连接给this.socket1
+    if (Object.keys(store.socket).indexOf("acks") > -1) {
+      this.socket1 = store.socket;
+    }
+
+    //const newConnect = sessionStorage.getItem("newConnect");
+    //if (newConnect === "true") {
+    //  console.log("已经建立过连接");
+    //} else {
+    //  console.log("还未建立过连接");
+    //}
+
+    let connectTabs = JSON.parse(sessionStorage.getItem("connectTabs"));
+    if (!connectTabs) {
+      connectTabs = [];
+    }
+    console.log("created>>>>connectTabs:", connectTabs);
+    if ((Object.keys(store.socket).indexOf("acks") <= -1) && connectTabs && connectTabs.length > 0) {
+      this.socket1 = io("http://localhost:3000");
+      for (let i = 0; i < connectTabs.length; i++) {
+        this.socket1.emit("enterRoom", {
+          roomNum: connectTabs[i],
+        });
+      }
+    }
   },
+
+  // beforeDestroy() {
+  //   console.log("beforeDestroy:触发disconnect事件");
+  //   // this.socket1.emit("disc");
+  //   if (Object.keys(this.socket1).indexOf("acks") > -1) {
+  //     this.socket1.close();
+  //   }
+  // },
+
   //或者将其放在created函数中
 
   // beforeRouteEnter(to, from, next) {
@@ -300,6 +298,7 @@ export default {
   // },
 };
 </script>
+
 <style scoped>
 div.divtabpame {
   height: 120px;

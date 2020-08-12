@@ -8,13 +8,22 @@
 
 <script>
 import io from "socket.io-client";
-
+import { store, mutations } from "../store";
 export default {
   name: "Hw",
   props: {
     msg: String,
   },
-
+  created() {
+    console.log("created>Hw");
+    console.log(
+      "mutations,store.name,store.message，store.socket:",
+      mutations,
+      store.name,
+      store.message,
+      store.socket
+    );
+  },
   methods: {
     clickButton: function() {
       // $socket is socket.io-client instance
